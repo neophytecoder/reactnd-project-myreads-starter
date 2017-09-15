@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React from 'react'
 import * as BooksAPI from './BooksAPI'
 import './App.css'
 import {Route} from 'react-router-dom'
@@ -13,46 +13,94 @@ class BooksApp extends React.Component {
      * users can use the browser's back and forward buttons to navigate between
      * pages, as well as provide a good URL they can bookmark and share.
      */
-    showSearchPage: false,
     books: [],
-    booksInChangedShelf: []
+    searchedBooks: []
   }
 
   onBookShelfChanged = (newBook, shelf) => {
     console.log("onBookShelfChanged");
-    let books = this.state.books;
-    let booksInChangedShelf = [];
-    books.forEach((book, id) => {
-      if(book.id === newBook.id) {
+    let books = JSON.parse(JSON.stringify(this.state.books)); // deep copy
+    let clonedNewBook = JSON.parse(JSON.stringify(newBook));
+
+    let filteredBooks = books.filter((book)=>(book.id === clonedNewBook.id));
+    if (filteredBooks.length === 0) {
+      console.log("pushed");
+      clonedNewBook.shelf = shelf;
+      books.push(clonedNewBook);
+    } else {
+      filteredBooks.forEach((book, id) => {
         book.shelf = shelf;
-        booksInChangedShelf.push(book);
-      }
-    });
-    this.setState({booksInChangedShelf: booksInChangedShelf, books: books});
+      });
+    }
+
+    this.setState({books});
   }
 
-  componentDidMount() {
-    BooksAPI.getAll()
-        .then((data) => {
-          console.log(data);
-          this.setState({books: data});
-        });
-  }
-
-  componentDidUpdate() {
-    console.log("componentDidUpdate");
-    let booksInChangedShelf = this.state.booksInChangedShelf;
-    console.log("called"+booksInChangedShelf.length);
-    if (booksInChangedShelf.length > 0) {
-        booksInChangedShelf.forEach((book)=>{
+  serverUpdateBooksIfChanged = (prevBooks, currentBooks) => {
+    currentBooks.filter((prevBook) => {
+      return prevBooks
+        .filter((book) => {
+          return book.id===prevBook.id && book.shelf!== prevBook.shelf
+        })
+        .length === 1;
+    }).forEach(
+          (book) => {
             BooksAPI.update(book, book.shelf)
               .then((data)=>{
                   console.log("success");
                   console.log(data);
+                  // TODO check when updating data is successful or not
               });
+          }
+    );
+  }
+
+  searchBooksWithTerm = (searchTerm) => {
+    BooksAPI.search(searchTerm, 14)
+      .then((books) => {
+        if (books.error) {
+          books = [];
+        }
+
+        books.forEach((book) => {
+          let filteredBooks = this.state.books.filter((stateBook)=>(stateBook.id===book.id));
+          if (filteredBooks.length === 1) {
+            book.shelf = filteredBooks[0].shelf;
+          }
         });
-        this.setState({booksInChangedShelf: []});
-    }
+
+        console.log(books);
+        this.setState({
+          searchedBooks: books
+        });
+      });
+  }
+
+  resetBooks = () => {
+    this.setState({searchedBooks:[]});
+  }
+
+  initBooks = () => {
+    BooksAPI.getAll()
+        .then((data) => {
+          //console.log(data);
+          this.setState({books: data});
+        });
+  }
+
+  reinitBooks = () => {
+    this.resetBooks();
+    this.initBooks();
+  }
+
+  componentDidMount() {
+    console.log("componentDidMount");
+    this.initBooks();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("componentDidUpdate");
+    this.serverUpdateBooksIfChanged(prevState.books, this.state.books);
   }
 
   render() {
@@ -60,13 +108,19 @@ class BooksApp extends React.Component {
       <div className="app">
         <Route exact path="/" render={
           () => (
-            <ListBookComponent books={this.state.books} onBookShelfChanged={this.onBookShelfChanged} />
+            <ListBookComponent
+              resetBooks={this.resetBooks}
+              books={this.state.books}
+              onBookShelfChanged={this.onBookShelfChanged} />
           )
         }/>
 
         <Route path="/search" render={
           () => (
-            <SearchComponent/>
+            <SearchComponent
+              searchedBooks={this.state.searchedBooks}
+              onBookShelfChanged={this.onBookShelfChanged}
+              searchBooksWithTerm={this.searchBooksWithTerm}/>
           )
         }/>
 

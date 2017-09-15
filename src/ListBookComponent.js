@@ -3,9 +3,6 @@ import {Link} from 'react-router-dom'
 import BookComponent from "./BookComponent.js"
 
 class ListBookComponent extends Component {
-  constructor(props) {
-    super(props);
-  }
 
   showBooks = (shelf) => {
     return this.props.books
@@ -13,7 +10,7 @@ class ListBookComponent extends Component {
       .map((book)=>{
         //console.log(book);
         return (
-          <li key={book.title}>
+          <li key={book.id}>
             <BookComponent book={book} onBookShelfChanged={this.props.onBookShelfChanged}/>
           </li>
         )
@@ -63,7 +60,7 @@ class ListBookComponent extends Component {
           </div>
         </div>
         <div className="open-search">
-          <Link to="/search">Add a book</Link>
+          <Link to="/search" onClick={()=>{this.props.resetBooks()}}>Add a book</Link>
         </div>
       </div>
     );

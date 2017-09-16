@@ -7,8 +7,25 @@ class SearchComponent extends Component {
     super(props);
     this.state = {
       searchTerm: "",
-      page: 1
+      isSearching: false,
+      isBookChange: false,
+      newBook: {},
+      newShelf: ""
     }
+  }
+
+  onBookShelfChanged = (newBook, shelf) => {
+    console.log("onBookShelfChanged");
+    this.setState({isBookChange: true, newBook, newShelf: shelf});
+  }
+
+  onSearchChanged = (event) => {
+    console.log("onSearchChanged");
+    const searchTerm = event.target.value;
+    this.setState({
+      searchTerm,
+      isSearching: true
+    });
   }
 
   showBooks= () => {
@@ -19,25 +36,33 @@ class SearchComponent extends Component {
         //console.log(book);
         return (
           <li key={book.id}>
-            <BookComponent book={book} onBookShelfChanged={this.props.onBookShelfChanged}/>
+            <BookComponent book={book} onBookShelfChanged={this.onBookShelfChanged}/>
           </li>
         )
       });
   }
 
-  onSearchChanged = (event) => {
-    const searchTerm = event.target.value;
-    this.setState({
-      searchTerm
-    });
+
+  componentWillUpdate(nextProps, nextState) {
+      console.log("componentWillUpdate search");
+      if (nextState.isBookChange) {
+        let {newBook, newShelf} = nextState;
+        console.log(newBook);
+        console.log(newShelf);
+        this.props.onBookShelfChanged(newBook, newShelf);
+      }
   }
 
   componentDidUpdate() {
-    const searchTerm = this.state.searchTerm;
-    console.log(searchTerm);
-    if (searchTerm !== "") {
+    console.log("componentDidUpdate search");
+    if (this.state.isSearching) {
+      const searchTerm = this.state.searchTerm;
+      console.log(searchTerm);
       this.props.searchBooksWithTerm(searchTerm);
-      this.setState({searchTerm: ""});
+      this.setState({isSearching: false});
+    }
+    if (this.state.isBookChange) {
+      this.setState({isBookChange: false});
     }
   }
 
@@ -55,7 +80,9 @@ class SearchComponent extends Component {
               However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
               you don't find a specific author or title. Every search is limited by search terms.
             */}
-            <input type="text" placeholder="Search by title or author"
+            <input type="text"
+              placeholder="Search by title or author"
+              value={this.state.searchTerm}
               onChange={this.onSearchChanged}/>
 
           </div>

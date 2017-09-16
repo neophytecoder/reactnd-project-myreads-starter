@@ -38,17 +38,24 @@ class BooksApp extends React.Component {
 
   serverUpdateBooksIfChanged = (prevBooks, currentBooks) => {
     currentBooks.filter((prevBook) => {
-      return prevBooks
+      let findChangedBooks = prevBooks
         .filter((book) => {
           return book.id===prevBook.id && book.shelf!== prevBook.shelf
         })
         .length === 1;
+      let findAddedBooks = prevBooks
+        .filter((book) => {
+          return book.id===prevBook.id
+        })
+        .length === 0;
+      return findChangedBooks || findAddedBooks;
     }).forEach(
           (book) => {
+            console.log(book);
+
             BooksAPI.update(book, book.shelf)
               .then((data)=>{
                   console.log("success");
-                  console.log(data);
                   // TODO check when updating data is successful or not
               });
           }
@@ -94,13 +101,13 @@ class BooksApp extends React.Component {
   }
 
   componentDidMount() {
-    console.log("componentDidMount");
+    console.log("componentDidMount App");
     this.initBooks();
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    console.log("componentDidUpdate");
-    this.serverUpdateBooksIfChanged(prevState.books, this.state.books);
+  componentWillUpdate(nextProps, nextState) {
+    console.log("componentWillUpdate App");
+    this.serverUpdateBooksIfChanged(this.state.books, nextState.books);
   }
 
   render() {

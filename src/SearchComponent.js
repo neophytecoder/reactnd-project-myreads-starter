@@ -6,25 +6,17 @@ class SearchComponent extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      searchTerm: "",
-      isSearching: false,
-      isBookChange: false,
-      newBook: {},
-      newShelf: ""
+      searchTerm: ""
     }
   }
 
-  onBookShelfChanged = (newBook, shelf) => {
-    console.log("onBookShelfChanged");
-    this.setState({isBookChange: true, newBook, newShelf: shelf});
-  }
 
   onSearchChanged = (event) => {
     console.log("onSearchChanged");
     const searchTerm = event.target.value;
+    this.props.searchBooksWithTerm(searchTerm);
     this.setState({
-      searchTerm,
-      isSearching: true
+      searchTerm
     });
   }
 
@@ -33,37 +25,12 @@ class SearchComponent extends Component {
     console.log(this.props.searchedBooks);
 
     return this.props.searchedBooks.map((book)=>{
-        //console.log(book);
         return (
           <li key={book.id}>
-            <BookComponent book={book} onBookShelfChanged={this.onBookShelfChanged}/>
+            <BookComponent book={book} onBookShelfChanged={this.props.onBookShelfChanged}/>
           </li>
         )
       });
-  }
-
-
-  componentWillUpdate(nextProps, nextState) {
-      console.log("componentWillUpdate search");
-      if (nextState.isBookChange) {
-        let {newBook, newShelf} = nextState;
-        console.log(newBook);
-        console.log(newShelf);
-        this.props.onBookShelfChanged(newBook, newShelf);
-      }
-  }
-
-  componentDidUpdate() {
-    console.log("componentDidUpdate search");
-    if (this.state.isSearching) {
-      const searchTerm = this.state.searchTerm;
-      console.log(searchTerm);
-      this.props.searchBooksWithTerm(searchTerm);
-      this.setState({isSearching: false});
-    }
-    if (this.state.isBookChange) {
-      this.setState({isBookChange: false});
-    }
   }
 
   render() {

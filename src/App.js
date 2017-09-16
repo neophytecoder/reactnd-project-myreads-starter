@@ -32,7 +32,7 @@ class BooksApp extends React.Component {
         book.shelf = shelf;
       });
     }
-
+    this.serverUpdateBooksIfChanged(this.state.books, books);
     this.setState({books});
   }
 
@@ -95,19 +95,9 @@ class BooksApp extends React.Component {
         });
   }
 
-  reinitBooks = () => {
-    this.resetBooks();
-    this.initBooks();
-  }
-
   componentDidMount() {
     console.log("componentDidMount App");
     this.initBooks();
-  }
-
-  componentWillUpdate(nextProps, nextState) {
-    console.log("componentWillUpdate App");
-    this.serverUpdateBooksIfChanged(this.state.books, nextState.books);
   }
 
   render() {
